@@ -8,7 +8,7 @@ namespace SpaceGame {
   using UnityEngine;
 
 
-  public class Compartment : MonoBehaviour {
+  public abstract class Compartment : MonoBehaviour {
 
     private Ship _owner;
     public Ship owner {
@@ -24,6 +24,14 @@ namespace SpaceGame {
 
         _owner = value;
       }
+    }
+
+    /// <summary> Returns component or the owner Ship if component is a Compartment </summary>
+    public static Component GetOwner(Component component) {
+      if (component is Compartment comp)
+        if (comp.owner)
+          return comp.owner;
+      return component;
     }
 
 

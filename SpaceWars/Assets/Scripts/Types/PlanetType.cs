@@ -1,71 +1,10 @@
-
+﻿
 
 
 
 namespace SpaceGame {
 
   using System;
-
-
-  public enum DamageType {
-    /// <summary> Damage caused by collisions and such. Heat if you go in to a star </summary>
-    Physical,
-    /// <summary> Laser </summary>
-    Energy,
-    /// <summary> Glowy particles, generally slower than lasers </summary>
-    Plasma,
-    /// <summary> Missiles etc. Missiles may also apply their own additional effects </summary>
-    Explosive,
-    /// <summary> Radiation related damage. Note that nuclear bombs usually also do explosive damage nearby </summary>
-    Radiation,
-  }
-
-  [Flags]
-  public enum ShipType {
-
-    None = 0,
-    Any = ~0,
-
-    Own = 1 << 0,
-    Ally = 1 << 1,
-    Neutral = 1 << 2,
-    Enemy = 1 << 3,
-
-    Fighter = 1 << 4,
-    Ship = 1 << 5,
-    MotherShip = 1 << 6,
-    Station = 1 << 7,
-  }
-
-  [Flags]
-  public enum StarType {
-    None = 0,
-    Any = ~0,
-
-    Own = 1 << 0,
-    Ally = 1 << 1,
-    Neutral = 1 << 2,
-    Enemy = 1 << 3,
-
-    WhiteDwarf = 1 << 4,
-    SequenceStar = 1 << 5,
-    Giant = 1 << 6,
-    SuperGiant = 1 << 7,
-    NeutronStar = 1 << 8,
-    BlackHole = 1 << 9,
-  }
-
-  [Flags]
-  public enum AsteroidType {
-    None = 0,
-    Any = ~0,
-
-    Own = 1 << 0,
-    Ally = 1 << 1,
-    Neutral = 1 << 2,
-    Enemy = 1 << 3,
-
-  }
 
   [Flags]
   public enum PlanetType {

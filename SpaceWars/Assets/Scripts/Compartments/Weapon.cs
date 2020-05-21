@@ -11,7 +11,7 @@ namespace SpaceGame {
   using Muc.Types.Extensions;
   using System.Linq;
 
-  public class Weapon : Compartment {
+  public abstract class Weapon : Compartment {
 
     [Tooltip("The Transform that is rotated.")]
     public Transform joint;
