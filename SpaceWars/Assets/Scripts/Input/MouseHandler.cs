@@ -20,9 +20,9 @@ namespace SpaceGame {
     [Tooltip("LayerMask used with RayCast when clicking the primary mouse button")]
     public LayerMask mask;
 
-    private TaskCompletionSource<GameObject> task;
-
-    private TargetFilter targetFilter;
+    private TaskCompletionSource<GameObject> getTargetTask;
+    private IValidator<GameObject> validator;
+    private bool promoteCompartment;
 
     void Reset() {
       if (!GetComponent<Camera>()) {
@@ -31,52 +31,59 @@ namespace SpaceGame {
     }
 
     void OnDestroy() {
-      if (task != null) task.SetResult(null);
+      if (getTargetTask != null) getTargetTask.SetResult(null);
     }
 
     void Update() {
 
-      if (task != null && !task.Task.IsCompleted) {
-
-
-        if (Physics.Raycast(transform.position.RayTo(transform.forward), out var hit)) {
-          // Pointing at something
-
-          var target = hit.collider.gameObject;
-
-          if (Input.GetKeyDown(KeyCode.Mouse0)) {
-            if (!target) task.SetResult(null);
-
-            targetFilter.Validate(target, out var overrideTarget);
-
-
-
-            task.SetResult(null);
-          }
-
-        } else {
-          // Mouse not pointing to anything
-
-        }
+      if (getTargetTask != null && !getTargetTask.Task.IsCompleted) {
+        TestForTarget();
       }
     }
 
-    public bool ValidateType() {
-      // Test all types
+    void TestForTarget() {
+      if (Physics.Raycast(transform.position.RayTo(transform.forward), out var hit)) {
+        // Pointing at something
 
+        var target = hit.collider.gameObject;
 
-      return false;
+        if (promoteCompartment) {
+          var cment = target.GetComponent<Compartment>();
+          if (cment) target = cment.owner ? cment.owner.gameObject : null;
+        }
+
+        var valid = target ? false : validator.Validate(gameObject);
+
+        if (Input.GetKeyDown(KeyCode.Mouse0)) {
+          if (!target) getTargetTask.SetResult(null);
+
+          if (valid) {
+            // Valid target
+            getTargetTask.SetResult(target);
+
+          } else {
+            // Invalid target
+            getTargetTask.SetResult(null);
+          }
+        } else if (valid) {
+          // Highlight?
+        }
+
+      } else {
+        // Nothing
+      }
     }
 
     public void RenderTarget() {
       // Rendering of highlights or something like that
     }
 
-    public async Task<GameObject> GetTarget(TargetFilter targetType) {
-      this.targetFilter = targetType;
-      if (task != null) task.SetResult(null);
-      task = new TaskCompletionSource<GameObject>();
-      return await task.Task;
+    public async Task<GameObject> GetTarget(IValidator<GameObject> validator, bool promoteCompartment = false) {
+      this.validator = validator;
+      this.promoteCompartment = promoteCompartment;
+      if (getTargetTask != null) getTargetTask.SetResult(null);
+      getTargetTask = new TaskCompletionSource<GameObject>();
+      return await getTargetTask.Task;
     }
   }
 }

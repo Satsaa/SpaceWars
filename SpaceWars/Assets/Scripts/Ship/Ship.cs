@@ -11,7 +11,7 @@ namespace SpaceGame {
 
   [RequireComponent(typeof(Renderer))]
   [RequireComponent(typeof(MeshFilter))]
-  public abstract class Ship : MonoBehaviour {
+  public abstract class Ship : MonoBehaviour, ITeamable {
 
 
     public virtual bool canMove { get; protected set; } = true;
@@ -20,8 +20,9 @@ namespace SpaceGame {
     public virtual bool canAttack { get; protected set; } = true;
     public virtual bool attackTarget { get; }
 
-    public OwnerType ownerType => (OwnerType)shipType;
-    public ShipType shipType = ShipType.Ship | ShipType.Neutral;
+    public virtual TeamType team { get; set; } = TeamType.Unassigned;
+
+    public ShipType shipType = ShipType.Ship;
 
     protected List<Compartment> compartments;
     public T[] GetCompartments<T>() where T : Compartment => compartments.FindAll(v => v is T) as T[];
