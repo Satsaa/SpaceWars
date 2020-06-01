@@ -5,14 +5,14 @@ namespace SpaceGame {
 
   using UnityEngine;
 
-  public struct ValidatorAll : IValidator<GameObject> {
-    IValidator<GameObject>[] validators;
+  public struct ValidatorAll<T> : IValidator<T> {
+    IValidator<T>[] validators;
 
-    public ValidatorAll(params IValidator<GameObject>[] validators) {
+    public ValidatorAll(params IValidator<T>[] validators) {
       this.validators = validators;
     }
 
-    public bool Validate(GameObject target) {
+    public bool Validate(T target) {
       foreach (var validator in validators) {
         if (!validator.Validate(target)) return false;
       }

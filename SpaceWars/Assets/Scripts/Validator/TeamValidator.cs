@@ -3,10 +3,6 @@
 
 namespace SpaceGame {
 
-  using System.Linq;
-
-  using UnityEngine;
-
   using static Muc.BinUtil;
 
   public readonly struct TeamValidator : IValidator<ITeamable> {
