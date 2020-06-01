@@ -14,6 +14,7 @@ namespace SpaceGame {
   using System.Linq;
   using System.Threading.Tasks;
 
+  [ExecuteInEditMode]
   public class InputComponent : MonoBehaviour {
 
     [Tooltip("LayerMask used with RayCast when clicking the primary mouse button")]
@@ -44,7 +45,7 @@ namespace SpaceGame {
         Debug.LogWarning($"Newly created {nameof(InputComponent)} destroyed because there is already another one");
         return;
       }
-      MouseInputHandler.inputComponent = this;
+      // MouseInputHandler.inputComponent = this;
     }
 
     void Update() => MouseInputHandler.Update();

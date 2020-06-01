@@ -10,6 +10,9 @@ namespace Muc.Collections {
 
   using Muc.Types;
 
+  /// <summary>
+  /// List in which new items are sorted based on a provided Comparison function
+  /// </summary>
   public class OrderedList<T> : ICollection<T>, IEnumerable<T>, IEnumerable, IList<T>, IReadOnlyCollection<T>, IReadOnlyList<T>, ICollection, IList {
 
 
@@ -20,12 +23,20 @@ namespace Muc.Collections {
     protected readonly IComparer<T> comparer;
 
 
-    public T this[int index] { get => items[index]; set => items[index] = value; }
+    public T this[int index] {
+      get => items[index];
+      set => ReplaceAt(index, value);
+    }
 
 
     #region Ctor
 
-    protected OrderedList(IComparer<T> comparer, List<T> items) { this.items = items; this.comparer = comparer; }
+    protected OrderedList(IComparer<T> comparer, List<T> items) {
+      if (items == null) throw new NullReferenceException("The items cannot be null!");
+      this.items = items;
+      if (comparer == null) throw new NullReferenceException("The comparison provider cannot be null!");
+      this.comparer = comparer;
+    }
 
     // IComparer overloads
     public OrderedList(IComparer<T> comparer) : this(comparer, new List<T>()) { }
@@ -43,20 +54,43 @@ namespace Muc.Collections {
     private class Comparer : IComparer<T> {
       private readonly Comparison<T> comparison;
       public Comparer(Comparison<T> comparison) => this.comparison = comparison;
-      int IComparer<T>.Compare(T x, T y) => comparison(x, y);
+      public int Compare(T x, T y) => comparison(x, y);
     }
 
     public void Add(T item) {
 
       int i = 0;
-      while (comparer.Compare(item, items[i]) >= 0 && ++i < items.Count) ;
+      if (items.Count != 0) {
+        while (comparer.Compare(item, items[i]) >= 0 && ++i < items.Count) ;
+      }
 
       items.Insert(i, item);
     }
 
+    /// <summary> Not optimized </summary>
     public void AddRange(IEnumerable<T> collection) {
       foreach (var item in collection)
         Add(item);
+    }
+
+
+    protected void ReplaceAt(int index, T item) {
+
+      int i = 0;
+      while (comparer.Compare(item, items[i]) >= 0 && ++i < items.Count) ;
+
+      if (i == index || i == index + 1) {
+        items[index] = item;
+        return;
+      }
+
+      if (i < index) {
+        items.RemoveAt(index);
+        items[i] = item;
+      } else {
+        items.Insert(i, item);
+        items.RemoveAt(index);
+      }
     }
 
 
@@ -136,7 +170,7 @@ namespace Muc.Collections {
     public void TrimExcess() => items.TrimExcess();
     public bool TrueForAll(Predicate<T> match) => items.TrueForAll(match);
 
-    #endregion 
+    #endregion
 
   }
 }

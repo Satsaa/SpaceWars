@@ -12,11 +12,23 @@ namespace SpaceGame {
   using Muc.Types.Extensions;
   using System.Threading.Tasks;
 
-  public class MouseInputType {
+  public readonly struct MouseInputType {
 
-    private readonly IValidator<GameObject> validator;
-    private readonly MouseInputSpecifier inputSpecifier;
+    public readonly MouseInputSpecifier inputSpecifier;
+    public readonly IValidator<GameObject> validator;
 
+    public readonly int priorityPoints;
+
+    public MouseInputType(MouseInputSpecifier inputSpecifier, IValidator<GameObject> validator) {
+      this.inputSpecifier = inputSpecifier;
+      this.validator = validator;
+
+      this.priorityPoints = 0;
+      if (inputSpecifier.HasFlag(MouseInputSpecifier.Static))
+        this.priorityPoints -= 0b_0001;
+      if (inputSpecifier.HasFlag(MouseInputSpecifier.Priority))
+        this.priorityPoints += 0b_0010;
+    }
   }
 
 }
