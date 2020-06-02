@@ -15,7 +15,7 @@ namespace SpaceGame {
   using MIT = MouseInputType;
 
 
-  public static class MouseInputHandler {
+  public static partial class MouseInputHandler {
 
     /* 
     
@@ -28,8 +28,7 @@ namespace SpaceGame {
     */
 
 
-    public static InputComponent inputComponent => _inputComponent ? _inputComponent : GameObject.FindObjectOfType<InputComponent>();
-    private static InputComponent _inputComponent;
+    public static InputComponent inputComponent;
 
     private static LayerMask defaultMask => inputComponent.defaultMask;
     private static Transform transform => inputComponent.transform;
@@ -37,8 +36,57 @@ namespace SpaceGame {
     private static Comparison<MIT> comparison = (x, y) => MouseInputTypeComparison(x, y);
     public static OrderedList<MIT> mits = new OrderedList<MIT>(comparison);
 
+
     // Call from component
     public static void Update() {
+      HandleMITs();
+    }
+
+    public static void HandleMITs() {
+
+      var actives = GetActive();
+
+      GameObject target = null;
+      GameObject promoTarget = null;
+      if (Physics.Raycast(transform.position.RayTo(transform.forward), out var hit)) {
+        target = hit.collider.gameObject;
+        promoTarget = TryPromote(target);
+      }
+
+      var primary = Input.GetKey(KeyCode.Mouse0);
+      var secondary = Input.GetKey(KeyCode.Mouse1);
+
+      GameObject highLightTarget = null;
+
+      foreach (var active in actives) {
+
+
+        var finalTarget = active.promoteCompartments && promoTarget ? promoTarget : target;
+
+        if (
+          (primary && !active.specifiers.HasFlag(MouseInputSpecifier.Secondary)) ||
+          (secondary && active.specifiers.HasFlag(MouseInputSpecifier.Secondary))
+        ) {
+
+          if (active.predicate(finalTarget)) {
+            highLightTarget = null;
+            active.onValid(finalTarget);
+            break;
+          }
+
+        } else if (!highLightTarget) {
+          if (active.predicate(finalTarget))
+            highLightTarget = finalTarget; // The first valid target is highlighted
+        }
+
+      }
+
+      if (highLightTarget) {
+        HighlightTarget(target);
+      }
+    }
+
+    public static void HighlightTarget(GameObject target) {
 
     }
 
@@ -56,7 +104,7 @@ namespace SpaceGame {
 
         prevPoints = mit.priorityPoints;
 
-        var spec = mit.inputSpecifier;
+        var spec = mit.specifiers;
 
         if (!spec.HasFlag(MouseInputSpecifier.AllowControl) && control != spec.HasFlag(MouseInputSpecifier.Control)) continue;
         if (!spec.HasFlag(MouseInputSpecifier.AllowAlt) && alt != spec.HasFlag(MouseInputSpecifier.Alt)) continue;
@@ -83,10 +131,11 @@ namespace SpaceGame {
       }
     }
 
-    private static void TryPromote(ref GameObject target) {
+    private static GameObject TryPromote(GameObject target) {
       var cment = target.GetComponent<Compartment>();
       if (cment && cment.owner)
-        target = cment.owner.gameObject;
+        return cment.owner.gameObject;
+      return null;
     }
 
   }

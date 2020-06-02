@@ -13,33 +13,35 @@ namespace SpaceGame {
     private MouseInputSpecifier mis;
 
     public override void OnInspectorGUI() {
+
+
       var target = this.target as MouseInputTypeActivityVisualisator;
 
       mis = (MouseInputSpecifier)EditorGUILayout.EnumFlagsField(mis);
 
-      if (GUILayout.Button("Create new"))
-        target.Add(new MouseInputType(mis, new JustAValidator()));
+
+      if (MouseInputHandler.inputComponent) {
+
+        if (GUILayout.Button("Create new"))
+          target.Add(new MouseInputType(mis, (x) => true, (x) => { }));
 
 
-      var actives = new List<MouseInputType>(MouseInputHandler.GetActive());
+        var actives = new List<MouseInputType>(MouseInputHandler.GetActive());
 
-      serializedObject.Update();
-      foreach (var mit in MouseInputHandler.mits) {
-        using (new EditorGUI.DisabledScope(!actives.Contains(mit))) {
-          EditorGUILayout.LabelField(mit.inputSpecifier.ToString());
+        serializedObject.Update();
+        foreach (var mit in MouseInputHandler.mits) {
+          using (new EditorGUI.DisabledScope(!actives.Contains(mit))) {
+            EditorGUILayout.LabelField(mit.specifiers.ToString());
+          }
         }
+
+      } else {
+        GUILayout.Label($"{nameof(MouseInputType)}s will be shown here in play mode");
       }
 
       serializedObject.ApplyModifiedProperties();
     }
   }
-
-  public class JustAValidator : IValidator<GameObject> {
-    public bool Validate(GameObject target) {
-      throw new System.NotImplementedException();
-    }
-  }
-
 }
 
 namespace SpaceGame {
