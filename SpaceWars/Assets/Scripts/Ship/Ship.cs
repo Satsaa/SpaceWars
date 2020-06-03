@@ -24,8 +24,8 @@ namespace SpaceGame {
 
     public ShipType shipType = ShipType.Ship;
 
-    protected List<Compartment> compartments;
-    public T[] GetCompartments<T>() where T : Compartment => compartments.FindAll(v => v is T) as T[];
+    protected List<ShipPart> parts;
+    public T[] GetShipParts<T>() where T : ShipPart => parts.FindAll(v => v is T) as T[];
 
 
     // Start is called before the first frame update
@@ -44,17 +44,17 @@ namespace SpaceGame {
     }
 
 
-    public bool AssignCompartment(Compartment compartment) {
-      if (compartments.Contains(compartment)) return false;
-      if (compartment.owner) throw new CompartmentOwnershipViolationException($"{nameof(Compartment)} being assigned is already assigned to another {nameof(Ship)}");
-      compartments.Add(compartment);
+    public bool AssignPart(ShipPart compartment) {
+      if (parts.Contains(compartment)) return false;
+      if (compartment.owner) throw new PartOwnershipViolationException($"{nameof(ShipPart)} being assigned is already assigned to another {nameof(Ship)}");
+      parts.Add(compartment);
       return true;
     }
 
-    public bool UnassignCompartment(Compartment compartment) {
+    public bool UnassignPart(ShipPart compartment) {
       if (!compartment.owner) return false;
-      if (compartment.owner != this) throw new CompartmentOwnershipViolationException($"{nameof(Compartment)} being unassigned is assigned to another {nameof(Ship)}");
-      return compartments.Remove(compartment);
+      if (compartment.owner != this) throw new PartOwnershipViolationException($"{nameof(ShipPart)} being unassigned is assigned to another {nameof(Ship)}");
+      return parts.Remove(compartment);
     }
   }
 }

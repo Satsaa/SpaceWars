@@ -262,7 +262,7 @@ GameObject:
   - component: {fileID: 355130459}
   - component: {fileID: 355130458}
   - component: {fileID: 355130457}
-  m_Layer: 10
+  m_Layer: 0
   m_Name: Capsule (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -356,7 +356,7 @@ GameObject:
   - component: {fileID: 609743470}
   - component: {fileID: 609743469}
   - component: {fileID: 609743468}
-  m_Layer: 10
+  m_Layer: 0
   m_Name: Capsule
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -930,9 +930,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1759376000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f8494957c5560d84f8a9a5c9391643e5, type: 3}
+  m_Script: {fileID: 11500000, guid: c6826126b58ffd54fbd714636d1d4ceb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  primaryHighlighterPrefab: {fileID: 7609681180250886820, guid: c12bdc1113918d34883612a54e0b2005,
+    type: 3}
+  secondaryHighlighterPrefab: {fileID: 7609681180250886820, guid: f00ed2d3d1a8d3a42b9e455d1ffeb8bf,
+    type: 3}
 --- !u!114 &1759376009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -942,12 +946,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1759376000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 808a568443b487247bfe66a4a4b98770, type: 3}
+  m_Script: {fileID: 11500000, guid: 3ee446c3d45fc9b42ae78973a7fdb6d0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   defaultMask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 1
   dragMinDist: 2
   primary: 323
   secondary: 324
@@ -963,6 +967,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1759376000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bd4c70eefcefa3740b69ca02e9f8aff1, type: 3}
+  m_Script: {fileID: 11500000, guid: 470bf086420669a448cc988c6dce44f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  handler: {fileID: 0}

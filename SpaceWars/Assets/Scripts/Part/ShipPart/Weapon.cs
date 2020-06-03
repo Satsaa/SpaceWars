@@ -11,7 +11,7 @@ namespace SpaceGame {
   using Muc.Types.Extensions;
   using System.Linq;
 
-  public abstract class Weapon : Compartment {
+  public abstract class Weapon : ShipPart {
 
     [Tooltip("The Transform that is rotated.")]
     public Transform joint;
@@ -42,7 +42,7 @@ namespace SpaceGame {
 
       foreach (var hit in hits) {
         var hitGo = hit.collider.gameObject;
-        var comp = hitGo.GetComponent<Compartment>();
+        var comp = hitGo.GetComponent<ShipPart>();
         if (hitGo == target || (comp != null && comp.owner.gameObject == target)) break;
         else if (!ignoreInCollisionCheck.Contains(hitGo)) return false;
       }

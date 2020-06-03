@@ -14,6 +14,6 @@ namespace SpaceGame {
     Neutral = 1 << 3,
     Enemy = 1 << 4,
 
-    Any = uint.MaxValue >> -(4),
+    Any = uint.MaxValue >> -4,
   }
 }

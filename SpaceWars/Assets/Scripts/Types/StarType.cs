@@ -10,14 +10,14 @@ namespace SpaceGame {
   public enum StarType : uint {
     None = 0,
 
-    WhiteDwarf = 1 << 1,
-    SequenceStar = 1 << 2,
-    Giant = 1 << 3,
-    SuperGiant = 1 << 4,
-    NeutronStar = 1 << 5,
-    BlackHole = 1 << 6,
+    WhiteDwarf = 1 << 0,
+    SequenceStar = 1 << 1,
+    Giant = 1 << 2,
+    SuperGiant = 1 << 3,
+    NeutronStar = 1 << 4,
+    BlackHole = 1 << 5,
 
-    Any = uint.MaxValue >> -(6),
+    Any = uint.MaxValue >> -5,
   }
 
 }

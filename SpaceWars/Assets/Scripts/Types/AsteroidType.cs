@@ -10,7 +10,7 @@ namespace SpaceGame {
   public enum AsteroidType : uint {
     None = 0,
 
-    Any = uint.MaxValue >> -(0),
+    Any = 0, // uint.MaxValue >> -(1),
   }
 
 }

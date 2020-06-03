@@ -8,54 +8,172 @@ namespace SpaceGame {
   using System.Collections.Generic;
   using UnityEngine;
 
-  public static class Selection {
+  using MouseInput;
 
 
-    public static GameObject primary { get => _primary; set { _primary = value; all.Add(value); } }
-    private static GameObject _primary;
-
-    public static IEnumerator<GameObject> enumerator => all.GetEnumerator();
-
-    private static HashSet<GameObject> all { get; } = new HashSet<GameObject>();
+  [RequireComponent(typeof(MouseHotkeyHandler))]
+  public class Selection : MonoBehaviour {
 
 
-    public static void SetPrimary(GameObject item) {
-      all.Add(item);
+    public GameObject primaryHighlighterPrefab;
+    private GameObject primaryHighlighter;
+
+    public GameObject secondaryHighlighterPrefab;
+    private List<GameObject> secondaryHighlighters = new List<GameObject>();
+
+
+    private GameObject primary;
+
+    public ICollection<GameObject> selection => all;
+
+    private HashSet<GameObject> all { get; } = new HashSet<GameObject>();
+
+    private MouseHotkeyHandler handler;
+
+
+    void Awake() {
+      handler = GetComponent<MouseHotkeyHandler>();
+    }
+
+    void Start() {
+
+      primaryHighlighter = Instantiate(primaryHighlighterPrefab);
+      primaryHighlighter.SetActive(false);
+
+      // Select new primary
+      handler.AddMouseHotkey(
+        new Hotkey(
+          HotkeySpecifier.Static,
+          predicate: (go) => true,
+          action: (x) => {
+            if (!x) Clear();
+            else {
+              if (selection.Contains(x)) AddPrimary(x);
+              else Set(x);
+            }
+          }
+        )
+      );
+
+      // Add to selection
+      handler.AddMouseHotkey(
+        new Hotkey(
+          HotkeySpecifier.Static | HotkeySpecifier.Shift,
+          predicate: (go) => go,
+          action: AddPrimary
+        )
+      );
+
+      // Remove from selection
+      handler.AddMouseHotkey(
+        new Hotkey(
+          HotkeySpecifier.Static | HotkeySpecifier.ControlShift,
+          predicate: (go) => go,
+          action: Remove
+        )
+      );
+    }
+
+    private void Clear() {
+      all.Clear();
+      primary = null;
+    }
+
+    void Update() {
+
+    }
+
+    void LateUpdate() {
+      ShowSelection();
+    }
+
+    public void AddPrimary(GameObject item) {
+      Add(item);
       primary = item;
     }
 
-    public static void Set(GameObject item) => Set(new GameObject[] { item });
-    public static void Set(IEnumerable<GameObject> selection) {
+    public void Set(GameObject item) => Set(new GameObject[] { item });
+    public void Set(IEnumerable<GameObject> selection) {
       all.Clear();
       primary = null;
       foreach (var item in selection) {
         // First item becomes primary selection
         if (primary == null) primary = item;
-        all.Add(item);
+        Add(item);
       }
     }
 
-    public static void Add(GameObject item) => all.Add(item);
-    public static void Add(IEnumerable<GameObject> selection) {
+    public void Add(GameObject item) {
+      if (item is null) throw new ArgumentNullException(nameof(item));
+
+      all.Add(item);
+    }
+
+    public void Add(IEnumerable<GameObject> selection) {
       foreach (var item in selection) {
         Add(item);
       }
     }
 
-    public static void Remove(GameObject item) {
-      if (all.Remove(item) && item == primary) ResetPrimary();
+    public void Remove(GameObject item) {
+      all.Remove(item);
+      if (item == primary) ResetPrimary();
     }
 
-    public static void RemoveWhere(Predicate<GameObject> match) {
-      if (all.RemoveWhere(match) > 0 && match(primary)) ResetPrimary();
+    public void RemoveWhere(Predicate<GameObject> match) {
+      all.RemoveWhere(match);
+      if (match(primary)) ResetPrimary();
     }
 
 
-    private static void ResetPrimary() {
+    private void ResetPrimary() {
       foreach (var item in all) {
         primary = item;
         return;
       }
+      primary = null;
+    }
+
+    private void ShowSelection() {
+
+      if (!primary) {
+        primaryHighlighter.SetActive(false);
+      } else {
+        primaryHighlighter.transform.position = primary.transform.position;
+        primaryHighlighter.transform.localScale = primary.transform.lossyScale;
+        primaryHighlighter.transform.rotation = transform.rotation;
+        primaryHighlighter.SetActive(true);
+      }
+
+      // Allocate pool
+      while (all.Count > secondaryHighlighters.Count) {
+        secondaryHighlighters.Add(Instantiate(secondaryHighlighterPrefab));
+      }
+
+      // Enable highlighters
+      var i = 0;
+      foreach (var item in all) {
+
+
+        var highlighter = secondaryHighlighters[i];
+
+        highlighter.SetActive(primary != item);
+
+
+        highlighter.transform.position = item.transform.position;
+        highlighter.transform.localScale = item.transform.lossyScale;
+        highlighter.transform.rotation = transform.rotation;
+
+        i++;
+      }
+
+      // Disable the rest of the highLighters
+      while (i < secondaryHighlighters.Count) {
+        secondaryHighlighters[i].SetActive(false);
+
+        i++;
+      }
+
     }
   }
 }

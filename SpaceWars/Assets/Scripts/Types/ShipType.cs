@@ -11,12 +11,12 @@ namespace SpaceGame {
 
     None = 0,
 
-    Fighter = 1 << 1,
-    Ship = 1 << 2,
-    MotherShip = 1 << 3,
-    Station = 1 << 4,
+    Fighter = 1 << 0,
+    Ship = 1 << 1,
+    MotherShip = 1 << 2,
+    Station = 1 << 3,
 
-    Any = uint.MaxValue >> -(4),
+    Any = uint.MaxValue >> -3,
   }
 
 }
