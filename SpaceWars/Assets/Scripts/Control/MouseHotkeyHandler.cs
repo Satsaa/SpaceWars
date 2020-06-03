@@ -12,81 +12,140 @@ namespace SpaceGame.MouseInput {
 
   using Muc.Collections;
   using Muc.Types.Extensions;
-  using MIT = Hotkey;
+  using System.Linq;
 
-
-  public partial class MouseHotkeyHandler : MonoBehaviour {
+  [RequireComponent(typeof(Camera))]
+  public class MouseHotkeyHandler : MonoBehaviour {
 
     [Tooltip("LayerMask used with RayCast when clicking the primary mouse button")]
     public LayerMask defaultMask;
 
     [Tooltip("Minimum pixel distance dragged before registering drag. Prevents accidental drags.")]
-    public float dragMinDist = 2;
+    public float minDragDist = 2;
 
     [Tooltip("The primary button. Mostly used for selecting targets")]
-    public KeyCode primary = KeyCode.Mouse0;
+    public KeyCode primaryKey = KeyCode.Mouse0;
     [Tooltip("The secondary button. Mostly used for move targeting")]
-    public KeyCode secondary = KeyCode.Mouse1;
+    public KeyCode secondaryKey = KeyCode.Mouse1;
 
-    public KeyCode Control = KeyCode.LeftControl;
-    public KeyCode Alt = KeyCode.LeftAlt;
-    public KeyCode Shift = KeyCode.LeftShift;
-
-
-    public IReadOnlyList<MIT> MouseHotkeys => mits;
-    private OrderedList<MIT> mits = new OrderedList<MIT>(MouseHotkeyComparison);
+    public KeyCode controlKey = KeyCode.LeftControl;
+    public KeyCode altKey = KeyCode.LeftAlt;
+    public KeyCode shiftKey = KeyCode.LeftShift;
 
 
-    void Reset() {
-      if (!GetComponent<Camera>()) {
-        Debug.LogWarning($"{nameof(MouseHotkeyHandler)} is intended to be on a Camera GameObject");
-      }
-    }
+    public IReadOnlyList<Hotkey> hotkeys => _hotkeys;
+    private OrderedList<Hotkey> _hotkeys = new OrderedList<Hotkey>(MouseHotkeyComparison);
 
-    void Start() {
-      if (GameObject.FindObjectsOfType<MouseHotkeyHandler>().Length > 1) {
-        Destroy(gameObject);
-        Debug.LogWarning($"Newly created {nameof(MouseHotkeyHandler)} destroyed because there is already another one");
-        return;
-      }
+    private DragHotkey dragHotkey = null;
+    private GameObject dragTarget;
+    private bool dragIniting;
+    private float dragStartDist;
+    private Vector2 dragInitScreenPos;
+
+
+    private new Camera camera;
+
+
+    public void Awake() {
+      camera = GetComponent<Camera>();
     }
 
     // Call from component
     public void Update() {
-      HandleMITs(GetActive());
+      if (HandleDrag()) return;
+      HandleHotkeys(GetActive());
     }
 
-    public void HandleMITs(IEnumerable<MIT> actives) {
+    private bool HandleDrag() {
+      if (dragHotkey is null) return false;
+
+      if (dragIniting) {
+
+        // Cancel if releases before starting drag
+        if (!Input.GetKey(dragHotkey.specifiers.HasFlag(HotkeySpecifier.Secondary) ? secondaryKey : primaryKey)) {
+          dragHotkey = null;
+          return false;
+        }
+
+        // Check if enough movement
+        var dragDist = Vector2.Distance(dragInitScreenPos, Input.mousePosition);
+        if (dragDist < minDragDist) return true;
+
+        dragIniting = false;
+        dragHotkey.start(dragTarget, GetDragPosition());
+      }
+
+      // End if released
+      if (!Input.GetKey(dragHotkey.specifiers.HasFlag(HotkeySpecifier.Secondary) ? secondaryKey : primaryKey)) {
+        dragHotkey.end(dragTarget, GetDragPosition());
+        if (dragHotkey.specifiers.HasFlag(HotkeySpecifier.Static)) _hotkeys.Remove(dragHotkey);
+        dragHotkey = null;
+        return false;
+      }
+
+      dragHotkey.drag(dragTarget, GetDragPosition());
+
+
+      return true;
+
+      Vector3 GetDragPosition() => camera.transform.position + camera.ScreenPointToRay(Input.mousePosition).direction * dragStartDist;
+    }
+
+
+    public void HandleHotkeys(IEnumerable<Hotkey> hotkeys) {
 
       GameObject target = null;
       GameObject promoTarget = null;
-      if (Physics.Raycast(transform.position.RayTo(transform.forward), out var hit)) {
+      if (Physics.Raycast(camera.ScreenPointToRay(Input.mousePosition), out var hit)) {
         target = hit.collider.gameObject;
         promoTarget = TryPromote(target);
       }
 
-      var primary = Input.GetKeyDown(KeyCode.Mouse0);
-      var secondary = Input.GetKeyDown(KeyCode.Mouse1);
+      var primary = Input.GetKeyDown(primaryKey);
+      var secondary = Input.GetKeyDown(secondaryKey);
 
       GameObject highLightTarget = null;
 
-      foreach (var active in actives) {
+      var enumerator = hotkeys.GetEnumerator();
+      foreach (var hotkey in enumerator.Enumerate()) {
 
-        var finalTarget = (active.promote && promoTarget) ? promoTarget : target;
+        var finalTarget = (hotkey.promote && promoTarget) ? promoTarget : target;
 
         if (
-          (primary && !active.specifiers.HasFlag(HotkeySpecifier.Secondary)) ||
-          (secondary && active.specifiers.HasFlag(HotkeySpecifier.Secondary))
+          (primary && !hotkey.specifiers.HasFlag(HotkeySpecifier.Secondary)) ||
+          (secondary && hotkey.specifiers.HasFlag(HotkeySpecifier.Secondary))
         ) {
 
-          if (active.predicate(finalTarget)) {
+          if (hotkey.predicate(finalTarget)) {
+
+            // !!! We need to check for overlaps and apply the specifiers
+            // !!! We could even split the hotkey types in to their collections
+            // !!! like that we dont need type checks and we don't need to inherit from Hotkey
+
+            if (hotkey is DragHotkey dragHotkey) {
+
+              var overlapping = enumerator.Enumerate().Any(h => !(h is DragHotkey) && h.predicate(finalTarget));
+
+              dragIniting = true;
+              dragInitScreenPos = Input.mousePosition;
+              dragStartDist = Vector3.Distance(camera.transform.position, finalTarget.transform.position);
+              dragTarget = finalTarget;
+
+            } else {
+              
+              var overlapping = enumerator.Enumerate().Any(h => h is AtypicalHotkey && h.predicate(finalTarget));
+
+              hotkey.action(finalTarget);
+              if (!hotkey.specifiers.HasFlag(HotkeySpecifier.Static)) _hotkeys.Remove(hotkey);
+
+            }
+
             highLightTarget = null;
-            active.action(finalTarget);
             break;
           }
 
         } else if (!highLightTarget) {
-          if (active.predicate(finalTarget))
+          if (hotkey.predicate(finalTarget))
             highLightTarget = finalTarget; // The first valid target is highlighted
         }
 
@@ -101,20 +160,20 @@ namespace SpaceGame.MouseInput {
 
     }
 
-    public static int MouseHotkeyComparison(MIT mitA, MIT mitB) {
+    public static int MouseHotkeyComparison(Hotkey mitA, Hotkey mitB) {
       return mitA.priorityPoints - mitB.priorityPoints;
     }
 
-    public IEnumerable<MIT> GetActive() {
+    public IEnumerable<Hotkey> GetActive() {
 
-      var control = Input.GetKey(Control);
-      var alt = Input.GetKey(Alt);
-      var shift = Input.GetKey(Shift);
+      var control = Input.GetKey(controlKey);
+      var alt = Input.GetKey(altKey);
+      var shift = Input.GetKey(shiftKey);
 
       // Gets highest priority MITS and filter for modifiers
       var prevPoints = int.MinValue;
-      for (int i = mits.Count - 1; i >= 0; i--) {
-        var mit = mits[i];
+      for (int i = _hotkeys.Count - 1; i >= 0; i--) {
+        var mit = _hotkeys[i];
         if (mit.priorityPoints < prevPoints) break;
 
         prevPoints = mit.priorityPoints;
@@ -125,13 +184,13 @@ namespace SpaceGame.MouseInput {
         if (!spec.HasFlag(HotkeySpecifier.AllowAlt) && alt != spec.HasFlag(HotkeySpecifier.Alt)) continue;
         if (!spec.HasFlag(HotkeySpecifier.AllowShift) && shift != spec.HasFlag(HotkeySpecifier.Shift)) continue;
 
-        yield return mits[i];
+        yield return _hotkeys[i];
       }
 
     }
 
-    public void AddMouseHotkey(MIT mit) {
-      mits.Add(mit);
+    public void AddMouseHotkey(Hotkey mit) {
+      _hotkeys.Add(mit);
     }
 
     private GameObject TryPromote(GameObject target) {

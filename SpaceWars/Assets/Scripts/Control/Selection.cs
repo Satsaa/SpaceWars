@@ -4,6 +4,7 @@
 namespace SpaceGame {
 
   using System;
+  using System.Linq;
   using System.Collections;
   using System.Collections.Generic;
   using UnityEngine;
@@ -12,23 +13,35 @@ namespace SpaceGame {
 
 
   [RequireComponent(typeof(MouseHotkeyHandler))]
-  public class Selection : MonoBehaviour {
+  public class Selection : MonoBehaviour, IReadOnlyCollection<GameObject> {
 
 
-    public GameObject primaryHighlighterPrefab;
+    [SerializeField] GameObject primaryHighlighterPrefab;
     private GameObject primaryHighlighter;
 
-    public GameObject secondaryHighlighterPrefab;
+    [SerializeField] GameObject secondaryHighlighterPrefab;
     private List<GameObject> secondaryHighlighters = new List<GameObject>();
 
 
     private GameObject primary;
-
-    public ICollection<GameObject> selection => all;
-
     private HashSet<GameObject> all { get; } = new HashSet<GameObject>();
 
+
     private MouseHotkeyHandler handler;
+
+
+    #region Interface implementation
+
+    public IEnumerator<GameObject> GetEnumerator() => all.GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() => all.GetEnumerator();
+
+    bool Contains(GameObject item) => all.Contains(item);
+    public void CopyTo(GameObject[] array, int arrayIndex) => all.CopyTo(array, arrayIndex);
+
+    public int Count => all.Count;
+    public bool IsReadOnly => true;
+
+    #endregion
 
 
     void Awake() {
@@ -48,7 +61,7 @@ namespace SpaceGame {
           action: (x) => {
             if (!x) Clear();
             else {
-              if (selection.Contains(x)) AddPrimary(x);
+              if (Contains(x)) AddPrimary(x);
               else Set(x);
             }
           }
@@ -115,6 +128,7 @@ namespace SpaceGame {
       }
     }
 
+
     public void Remove(GameObject item) {
       all.Remove(item);
       if (item == primary) ResetPrimary();
@@ -175,5 +189,6 @@ namespace SpaceGame {
       }
 
     }
+
   }
 }

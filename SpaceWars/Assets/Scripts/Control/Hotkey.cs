@@ -4,14 +4,9 @@
 namespace SpaceGame.MouseInput {
 
   using System;
-  using System.Collections;
-  using System.Collections.Generic;
-
   using UnityEngine;
 
-  using Muc.Types.Extensions;
-  using System.Threading.Tasks;
-
+  [Serializable]
   public class Hotkey {
 
     /// <summary> Defines the activation circumstances of this MouseHotkey </summary>

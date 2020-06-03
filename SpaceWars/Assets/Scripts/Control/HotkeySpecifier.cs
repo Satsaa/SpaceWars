@@ -13,6 +13,7 @@ namespace SpaceGame.MouseInput {
     /// <summary> Require the secondary (right) mouse button to be pressed instead of the primary (left)  </summary>
     Secondary = 1 << 0,
 
+
     /// <summary>
     /// Static InputTypes will not be removed automatically.
     /// Static InputTypes will be ignored before any non-static InputTypes are settled.

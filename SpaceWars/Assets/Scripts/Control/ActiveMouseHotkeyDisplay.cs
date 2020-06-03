@@ -30,7 +30,7 @@ namespace SpaceGame.MouseInput {
 
         var actives = new List<Hotkey>(handler.GetActive());
 
-        foreach (var mit in handler.MouseHotkeys) {
+        foreach (var mit in handler.hotkeys) {
           using (new EditorGUI.DisabledScope(!actives.Contains(mit))) {
             EditorGUILayout.LabelField(mit.specifiers.ToString());
           }
