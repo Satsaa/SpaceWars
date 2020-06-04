@@ -15,7 +15,7 @@ namespace SpaceGame.MouseInput {
   using System.Linq;
 
   [RequireComponent(typeof(Camera))]
-  public class MouseHotkeyHandler : MonoBehaviour {
+  public class MouseActionHandler : MonoBehaviour {
 
     [Tooltip("LayerMask used with RayCast when clicking the primary mouse button")]
     public LayerMask defaultMask;
@@ -33,10 +33,10 @@ namespace SpaceGame.MouseInput {
     public KeyCode shiftKey = KeyCode.LeftShift;
 
 
-    public IReadOnlyList<Hotkey> hotkeys => _hotkeys;
-    private OrderedList<Hotkey> _hotkeys = new OrderedList<Hotkey>(MouseHotkeyComparison);
+    public IReadOnlyList<MouseAction> actions => _actions;
+    private OrderedList<MouseAction> _actions = new OrderedList<MouseAction>((a, b) => a.priority - b.priority);
 
-    private DragHotkey dragHotkey = null;
+    private DragAction dragHotkey = null;
     private GameObject dragTarget;
     private bool dragIniting;
     private float dragStartDist;
@@ -53,7 +53,7 @@ namespace SpaceGame.MouseInput {
     // Call from component
     public void Update() {
       if (HandleDrag()) return;
-      HandleHotkeys(GetActive());
+      HandleActions(WhereActive(_actions));
     }
 
     private bool HandleDrag() {
@@ -78,7 +78,7 @@ namespace SpaceGame.MouseInput {
       // End if released
       if (!Input.GetKey(dragHotkey.specifiers.HasFlag(HotkeySpecifier.Secondary) ? secondaryKey : primaryKey)) {
         dragHotkey.end(dragTarget, GetDragPosition());
-        if (dragHotkey.specifiers.HasFlag(HotkeySpecifier.Static)) _hotkeys.Remove(dragHotkey);
+        if (dragHotkey.specifiers.HasFlag(HotkeySpecifier.Persistent)) _actions.Remove(dragHotkey);
         dragHotkey = null;
         return false;
       }
@@ -92,8 +92,9 @@ namespace SpaceGame.MouseInput {
     }
 
 
-    public void HandleHotkeys(IEnumerable<Hotkey> hotkeys) {
+    public void HandleActions(IEnumerable<MouseAction> actions) {
 
+      // Find target
       GameObject target = null;
       GameObject promoTarget = null;
       if (Physics.Raycast(camera.ScreenPointToRay(Input.mousePosition), out var hit)) {
@@ -101,70 +102,50 @@ namespace SpaceGame.MouseInput {
         promoTarget = TryPromote(target);
       }
 
+      // Cache keys
       var primary = Input.GetKeyDown(primaryKey);
       var secondary = Input.GetKeyDown(secondaryKey);
 
-      GameObject highLightTarget = null;
 
-      var enumerator = hotkeys.GetEnumerator();
-      foreach (var hotkey in enumerator.Enumerate()) {
+      var enumerator = actions.GetEnumerator();
+      foreach (var action in enumerator.Enumerate()) {
 
-        var finalTarget = (hotkey.promote && promoTarget) ? promoTarget : target;
+        var finalTarget = (action.promote && promoTarget) ? promoTarget : target;
 
         if (
-          (primary && !hotkey.specifiers.HasFlag(HotkeySpecifier.Secondary)) ||
-          (secondary && hotkey.specifiers.HasFlag(HotkeySpecifier.Secondary))
+          (primary && !action.specifiers.HasFlag(HotkeySpecifier.Secondary)) ||
+          (secondary && action.specifiers.HasFlag(HotkeySpecifier.Secondary))
         ) {
 
-          if (hotkey.predicate(finalTarget)) {
+          if (action.validate(finalTarget)) {
 
-            // !!! We need to check for overlaps and apply the specifiers
-            // !!! We could even split the hotkey types in to their collections
-            // !!! like that we dont need type checks and we don't need to inherit from Hotkey
+            // Handle different MouseActions
+            switch (action) {
 
-            if (hotkey is DragHotkey dragHotkey) {
+              case DragAction dragAction:
+                dragIniting = true;
+                dragInitScreenPos = Input.mousePosition;
+                dragStartDist = Vector3.Distance(camera.transform.position, finalTarget.transform.position);
+                dragTarget = finalTarget;
+                break;
 
-              var overlapping = enumerator.Enumerate().Any(h => !(h is DragHotkey) && h.predicate(finalTarget));
-
-              dragIniting = true;
-              dragInitScreenPos = Input.mousePosition;
-              dragStartDist = Vector3.Distance(camera.transform.position, finalTarget.transform.position);
-              dragTarget = finalTarget;
-
-            } else {
-              
-              var overlapping = enumerator.Enumerate().Any(h => h is AtypicalHotkey && h.predicate(finalTarget));
-
-              hotkey.action(finalTarget);
-              if (!hotkey.specifiers.HasFlag(HotkeySpecifier.Static)) _hotkeys.Remove(hotkey);
-
+              case ClickAction clickAction:
+                clickAction.action(finalTarget);
+                if (!clickAction.specifiers.HasFlag(HotkeySpecifier.Persistent)) _actions.Remove(clickAction);
+                break;
             }
 
-            highLightTarget = null;
             break;
           }
 
-        } else if (!highLightTarget) {
-          if (hotkey.predicate(finalTarget))
-            highLightTarget = finalTarget; // The first valid target is highlighted
         }
 
       }
 
-      if (highLightTarget) {
-        HighlightTarget(target);
-      }
     }
 
-    public void HighlightTarget(GameObject target) {
-
-    }
-
-    public static int MouseHotkeyComparison(Hotkey mitA, Hotkey mitB) {
-      return mitA.priorityPoints - mitB.priorityPoints;
-    }
-
-    public IEnumerable<Hotkey> GetActive() {
+    public IEnumerable<MouseAction> WhereActive() => WhereActive(_actions);
+    public IEnumerable<T> WhereActive<T>(IList<T> actions) where T : MouseAction {
 
       var control = Input.GetKey(controlKey);
       var alt = Input.GetKey(altKey);
@@ -172,11 +153,11 @@ namespace SpaceGame.MouseInput {
 
       // Gets highest priority MITS and filter for modifiers
       var prevPoints = int.MinValue;
-      for (int i = _hotkeys.Count - 1; i >= 0; i--) {
-        var mit = _hotkeys[i];
-        if (mit.priorityPoints < prevPoints) break;
+      for (int i = actions.Count - 1; i >= 0; i--) {
+        var mit = actions[i];
+        if (mit.priority < prevPoints) break;
 
-        prevPoints = mit.priorityPoints;
+        prevPoints = mit.priority;
 
         var spec = mit.specifiers;
 
@@ -184,13 +165,13 @@ namespace SpaceGame.MouseInput {
         if (!spec.HasFlag(HotkeySpecifier.AllowAlt) && alt != spec.HasFlag(HotkeySpecifier.Alt)) continue;
         if (!spec.HasFlag(HotkeySpecifier.AllowShift) && shift != spec.HasFlag(HotkeySpecifier.Shift)) continue;
 
-        yield return _hotkeys[i];
+        yield return actions[i];
       }
 
     }
 
-    public void AddMouseHotkey(Hotkey mit) {
-      _hotkeys.Add(mit);
+    public void AddMouseHotkey(MouseAction mit) {
+      _actions.Add(mit);
     }
 
     private GameObject TryPromote(GameObject target) {

@@ -12,7 +12,7 @@ namespace SpaceGame {
   using MouseInput;
 
 
-  [RequireComponent(typeof(MouseHotkeyHandler))]
+  [RequireComponent(typeof(MouseActionHandler))]
   public class Selection : MonoBehaviour, IReadOnlyCollection<GameObject> {
 
 
@@ -27,7 +27,7 @@ namespace SpaceGame {
     private HashSet<GameObject> all { get; } = new HashSet<GameObject>();
 
 
-    private MouseHotkeyHandler handler;
+    private MouseActionHandler handler;
 
 
     #region Interface implementation
@@ -45,7 +45,7 @@ namespace SpaceGame {
 
 
     void Awake() {
-      handler = GetComponent<MouseHotkeyHandler>();
+      handler = GetComponent<MouseActionHandler>();
     }
 
     void Start() {
@@ -53,25 +53,31 @@ namespace SpaceGame {
       primaryHighlighter = Instantiate(primaryHighlighterPrefab);
       primaryHighlighter.SetActive(false);
 
+      // Deselect all by clicking void
+      handler.AddMouseHotkey(
+        new ClickAction(
+          HotkeySpecifier.Persistent,
+          predicate: (go) => !go,
+          action: (x) => { Clear(); }
+        )
+      );
+
       // Select new primary
       handler.AddMouseHotkey(
-        new Hotkey(
-          HotkeySpecifier.Static,
-          predicate: (go) => true,
+        new ClickAction(
+          HotkeySpecifier.Persistent,
+          predicate: (go) => go,
           action: (x) => {
-            if (!x) Clear();
-            else {
-              if (Contains(x)) AddPrimary(x);
-              else Set(x);
-            }
+            if (Contains(x)) AddPrimary(x);
+            else Set(x);
           }
         )
       );
 
       // Add to selection
       handler.AddMouseHotkey(
-        new Hotkey(
-          HotkeySpecifier.Static | HotkeySpecifier.Shift,
+        new ClickAction(
+          HotkeySpecifier.Persistent | HotkeySpecifier.Shift,
           predicate: (go) => go,
           action: AddPrimary
         )
@@ -79,8 +85,8 @@ namespace SpaceGame {
 
       // Remove from selection
       handler.AddMouseHotkey(
-        new Hotkey(
-          HotkeySpecifier.Static | HotkeySpecifier.ControlShift,
+        new ClickAction(
+          HotkeySpecifier.Persistent | HotkeySpecifier.ControlShift,
           predicate: (go) => go,
           action: Remove
         )

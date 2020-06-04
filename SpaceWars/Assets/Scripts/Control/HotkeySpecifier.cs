@@ -18,7 +18,7 @@ namespace SpaceGame.MouseInput {
     /// Static InputTypes will not be removed automatically.
     /// Static InputTypes will be ignored before any non-static InputTypes are settled.
     /// </summary>
-    Static = 1 << 1,
+    Persistent = 1 << 1,
 
     /// <summary> Priority InputTypes will be settled before any non-priority InputTypes </summary>
     Priority = 1 << 2,

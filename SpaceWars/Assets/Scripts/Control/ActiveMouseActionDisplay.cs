@@ -7,15 +7,15 @@ namespace SpaceGame.MouseInput {
   using UnityEditor;
   using System.Collections.Generic;
 
-  [CustomEditor(typeof(ActiveMouseHotkeyDisplay))]
-  public class ActiveMouseHotkeyDisplayEditor : Editor {
+  [CustomEditor(typeof(ActiveMouseActionDisplay))]
+  public class ActiveMouseActionDisplayEditor : Editor {
 
     private HotkeySpecifier mis;
 
     public override void OnInspectorGUI() {
       serializedObject.Update();
 
-      var target = this.target as ActiveMouseHotkeyDisplay;
+      var target = this.target as ActiveMouseActionDisplay;
       var handler = target.handler;
 
       mis = (HotkeySpecifier)EditorGUILayout.EnumFlagsField(mis);
@@ -23,14 +23,14 @@ namespace SpaceGame.MouseInput {
 
 
       if (GUILayout.Button("Create new"))
-        target.Add(new Hotkey(mis, (x) => true, (x) => { }));
+        target.Add(new ClickAction(mis, (x) => true, (x) => { }));
 
 
       if (handler) {
 
-        var actives = new List<Hotkey>(handler.GetActive());
+        var actives = new List<MouseAction>(handler.WhereActive());
 
-        foreach (var mit in handler.hotkeys) {
+        foreach (var mit in handler.actions) {
           using (new EditorGUI.DisabledScope(!actives.Contains(mit))) {
             EditorGUILayout.LabelField(mit.specifiers.ToString());
           }
@@ -49,16 +49,16 @@ namespace SpaceGame.MouseInput {
 
   using UnityEngine;
 
-  [RequireComponent(typeof(MouseHotkeyHandler))]
-  public class ActiveMouseHotkeyDisplay : MonoBehaviour {
+  [RequireComponent(typeof(MouseActionHandler))]
+  public class ActiveMouseActionDisplay : MonoBehaviour {
 
-    public MouseHotkeyHandler handler;
+    public MouseActionHandler handler;
 
     void Awake() {
-      handler = GetComponent<MouseHotkeyHandler>();
+      handler = GetComponent<MouseActionHandler>();
     }
 
-    public void Add(Hotkey mit) {
+    public void Add(ClickAction mit) {
       handler.AddMouseHotkey(mit);
     }
   }

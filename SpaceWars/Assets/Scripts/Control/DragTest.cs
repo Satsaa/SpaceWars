@@ -13,21 +13,21 @@ namespace SpaceGame {
   using Muc.Types.Extensions;
 
   [RequireComponent(typeof(Selection))]
-  [RequireComponent(typeof(MouseHotkeyHandler))]
+  [RequireComponent(typeof(MouseActionHandler))]
   public class DragTest : MonoBehaviour {
 
 
     void Start() {
 
       var selection = GetComponent<Selection>();
-      var handler = GetComponent<MouseHotkeyHandler>();
+      var handler = GetComponent<MouseActionHandler>();
 
       Vector2 prev = Vector2.zero;
 
       // Drag selected targets
       handler.AddMouseHotkey(
-        new DragHotkey(
-          specifiers: HotkeySpecifier.Static | HotkeySpecifier.Alt,
+        new DragAction(
+          specifiers: HotkeySpecifier.Persistent | HotkeySpecifier.Alt,
           predicate: (go) => selection.Contains(go),
           noPromote: false,
           start: (x, vec) => {
