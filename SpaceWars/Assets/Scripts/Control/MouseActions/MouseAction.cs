@@ -9,6 +9,8 @@ namespace SpaceGame.MouseInput {
 
   public abstract class MouseAction {
 
+    public static implicit operator bool(MouseAction d) => d != null;
+
     /// <summary> By default any GameObject containing an IPart Component will be promoted to IPart.owner.gameObject </summary>
     public bool promote { get; private set; }
 

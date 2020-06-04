@@ -36,7 +36,8 @@ namespace SpaceGame.MouseInput {
     public IReadOnlyList<MouseAction> actions => _actions;
     private OrderedList<MouseAction> _actions = new OrderedList<MouseAction>((a, b) => a.priority - b.priority);
 
-    private DragAction dragHotkey = null;
+    private DragAction dragAction = null;
+    private ClickAction dragClickActionFallback = null;
     private GameObject dragTarget;
     private bool dragIniting;
     private float dragStartDist;
@@ -57,13 +58,17 @@ namespace SpaceGame.MouseInput {
     }
 
     private bool HandleDrag() {
-      if (dragHotkey is null) return false;
+      if (dragAction is null) return false;
 
       if (dragIniting) {
 
         // Cancel if releases before starting drag
-        if (!Input.GetKey(dragHotkey.specifiers.HasFlag(HotkeySpecifier.Secondary) ? secondaryKey : primaryKey)) {
-          dragHotkey = null;
+        if (!Input.GetKey(dragAction.specifiers.HasFlag(HotkeySpecifier.Secondary) ? secondaryKey : primaryKey)) {
+          dragAction = null;
+
+          if (dragClickActionFallback && dragClickActionFallback.validate(dragTarget)) {
+            ExecuteClickAction(dragClickActionFallback, dragTarget);
+          }
           return false;
         }
 
@@ -72,18 +77,18 @@ namespace SpaceGame.MouseInput {
         if (dragDist < minDragDist) return true;
 
         dragIniting = false;
-        dragHotkey.start(dragTarget, GetDragPosition());
+        dragAction.start(dragTarget, GetDragPosition());
       }
 
       // End if released
-      if (!Input.GetKey(dragHotkey.specifiers.HasFlag(HotkeySpecifier.Secondary) ? secondaryKey : primaryKey)) {
-        dragHotkey.end(dragTarget, GetDragPosition());
-        if (dragHotkey.specifiers.HasFlag(HotkeySpecifier.Persistent)) _actions.Remove(dragHotkey);
-        dragHotkey = null;
+      if (!Input.GetKey(dragAction.specifiers.HasFlag(HotkeySpecifier.Secondary) ? secondaryKey : primaryKey)) {
+        dragAction.end(dragTarget, GetDragPosition());
+        if (!dragAction.specifiers.HasFlag(HotkeySpecifier.Persistent)) _actions.Remove(dragAction);
+        dragAction = null;
         return false;
       }
 
-      dragHotkey.drag(dragTarget, GetDragPosition());
+      dragAction.drag(dragTarget, GetDragPosition());
 
 
       return true;
@@ -93,6 +98,9 @@ namespace SpaceGame.MouseInput {
 
 
     public void HandleActions(IEnumerable<MouseAction> actions) {
+
+      (ClickAction a, GameObject g) clickActionData = (null, null);
+      (DragAction a, GameObject g) dragActionData = (null, null);
 
       // Find target
       GameObject target = null;
@@ -107,31 +115,28 @@ namespace SpaceGame.MouseInput {
       var secondary = Input.GetKeyDown(secondaryKey);
 
 
-      var enumerator = actions.GetEnumerator();
-      foreach (var action in enumerator.Enumerate()) {
+      foreach (var action in actions) {
 
-        var finalTarget = (action.promote && promoTarget) ? promoTarget : target;
+      if (dragActionData.a && clickActionData.a) break;
 
         if (
           (primary && !action.specifiers.HasFlag(HotkeySpecifier.Secondary)) ||
           (secondary && action.specifiers.HasFlag(HotkeySpecifier.Secondary))
         ) {
+          
+        var finalTarget = (action.promote && promoTarget) ? promoTarget : target;
 
           if (action.validate(finalTarget)) {
 
-            // Handle different MouseActions
+            // Handle different MouseAction types
             switch (action) {
 
               case DragAction dragAction:
-                dragIniting = true;
-                dragInitScreenPos = Input.mousePosition;
-                dragStartDist = Vector3.Distance(camera.transform.position, finalTarget.transform.position);
-                dragTarget = finalTarget;
+                dragActionData = (dragAction, finalTarget);
                 break;
 
               case ClickAction clickAction:
-                clickAction.action(finalTarget);
-                if (!clickAction.specifiers.HasFlag(HotkeySpecifier.Persistent)) _actions.Remove(clickAction);
+                clickActionData = (clickAction, finalTarget);
                 break;
             }
 
@@ -142,6 +147,26 @@ namespace SpaceGame.MouseInput {
 
       }
 
+      if (dragActionData.a) {
+        InitDragAction(dragActionData.a, dragActionData.g, clickActionData.a);
+      } else if (clickActionData.a) {
+        ExecuteClickAction(clickActionData.a, clickActionData.g);
+      }
+
+    }
+
+    private void InitDragAction(DragAction dragAction, GameObject target, ClickAction mouseActionFallback) {
+      dragIniting = true;
+      this.dragAction = dragAction;
+      dragInitScreenPos = Input.mousePosition;
+      dragStartDist = Vector3.Distance(camera.transform.position, target.transform.position);
+      dragTarget = target;
+      dragClickActionFallback = mouseActionFallback;
+    }
+
+    private void ExecuteClickAction(ClickAction clickAction, GameObject target) {
+      clickAction.action(target);
+      if (!clickAction.specifiers.HasFlag(HotkeySpecifier.Persistent)) _actions.Remove(clickAction);
     }
 
     public IEnumerable<MouseAction> WhereActive() => WhereActive(_actions);

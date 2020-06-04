@@ -22,7 +22,8 @@ namespace SpaceGame {
       var selection = GetComponent<Selection>();
       var handler = GetComponent<MouseActionHandler>();
 
-      Vector2 prev = Vector2.zero;
+      Plane plane = default(Plane);
+      Vector3 prev = Vector3.zero;
 
       // Drag selected targets
       handler.AddMouseHotkey(
@@ -30,20 +31,28 @@ namespace SpaceGame {
           specifiers: HotkeySpecifier.Persistent | HotkeySpecifier.Alt,
           predicate: (go) => selection.Contains(go),
           noPromote: false,
+
           start: (x, vec) => {
-            print("Start");
-            prev = vec;
+            plane = new Plane(Vector3.up, x.transform.position);
+            var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            if (plane.Raycast(ray, out float enter))
+              prev = ray.origin + ray.direction * enter;
           },
+
           drag: (x, v) => {
-            print("Drag");
-            var dif = v.xy() - prev;
+            var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            var current = Vector3.zero;
+             if (plane.Raycast(ray, out float enter))
+               current = ray.origin + ray.direction * enter;
             foreach (var item in selection)
-              item.transform.Translate(dif);
-            prev = v;
+              item.transform.position += current - prev;
+            prev = current;
           },
+
           end: (x, vec) => {
-            print("End");
+            
           }
+          
         )
       );
 

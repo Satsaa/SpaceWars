@@ -16,10 +16,10 @@ namespace SpaceGame {
   public class Selection : MonoBehaviour, IReadOnlyCollection<GameObject> {
 
 
-    [SerializeField] GameObject primaryHighlighterPrefab;
+    [field:SerializeField] GameObject primaryHighlighterPrefab {get; set;}
     private GameObject primaryHighlighter;
 
-    [SerializeField] GameObject secondaryHighlighterPrefab;
+    [field:SerializeField] GameObject secondaryHighlighterPrefab { get; set;}
     private List<GameObject> secondaryHighlighters = new List<GameObject>();
 
 
