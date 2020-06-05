@@ -23,11 +23,6 @@ namespace ParentedCamera.Editor {
 
       // Normals
       target.raycastPlaneNormal = EditorGUILayout.Toggle(new GUIContent(nameof(target.raycastPlaneNormal)), target.raycastPlaneNormal);
-      if (target.raycastPlaneNormal)
-        target.followTargetNormal = EditorGUILayout.Toggle(
-          new GUIContent( nameof(target.followTargetNormal), "Repeats the raycast from the Camera position to the targets position"),
-          target.followTargetNormal
-        );
       if (!target.raycastPlaneNormal) target.planeNormal = EditorGUILayout.Vector3Field(new GUIContent(nameof(target.planeNormal)), target.planeNormal);
 
       // Points
@@ -36,7 +31,7 @@ namespace ParentedCamera.Editor {
 
       // Shared
       if (target.raycastPlaneNormal || target.raycastPlanePoint) {
-        LayerMask tempMask = EditorGUILayout.MaskField( InternalEditorUtility.LayerMaskToConcatenatedLayersMask(target.mask), InternalEditorUtility.layers);
+        LayerMask tempMask = EditorGUILayout.MaskField(InternalEditorUtility.LayerMaskToConcatenatedLayersMask(target.mask), InternalEditorUtility.layers);
         target.mask = InternalEditorUtility.ConcatenatedLayersMaskToLayerMask(tempMask);
       }
 
@@ -70,18 +65,16 @@ namespace ParentedCamera {
     public LayerMask mask;
 
     public bool raycastPlaneNormal;
-    public bool followTargetNormal;
     public Vector3 planeNormal = Vector3.up;
 
     public bool raycastPlanePoint;
     public Vector3 planePoint;
-    public Plane plane;
 
 
     ParentedCamera pc;
     Vector3 rayOrigin;
     Vector3 prev;
-    Transform target;
+    Plane plane => new Plane(planeNormal, planePoint);
 
     void Start() {
       pc = gameObject.GetComponent<ParentedCamera>();
@@ -91,7 +84,7 @@ namespace ParentedCamera {
     void OnDrawGizmosSelected() {
       if (!Application.isPlaying || !Input.GetKey(key)) return;
       Handles.color = Color.red;
-      DrawDirArrow(planePoint, planePoint + planeNormal);
+      DrawDirArrow(planePoint, planePoint + planeNormal * Mathf.Min(1, Vector3.Distance(planePoint, planePoint + planeNormal) * 0.8f));
     }
 
     void DrawDirArrow(Vector3 sourcePoint, Vector3 endPoint) {
@@ -117,12 +110,9 @@ namespace ParentedCamera {
 
         var ray = pc.camera.ScreenPointToRay(Input.mousePosition);
         ray.origin = rayOrigin;
-        
+
         if (Physics.Raycast(ray, out var hit, mask)) {
-          if (raycastPlaneNormal) {
-            planeNormal = hit.normal;
-            if (followTargetNormal) target = hit.transform;
-          }
+          if (raycastPlaneNormal) planeNormal = hit.normal;
           if (raycastPlanePoint) planePoint = hit.point;
         }
       }
@@ -136,23 +126,13 @@ namespace ParentedCamera {
       var dif = prev - current;
       pc.displacement += dif;
       prev = current;
-      
-      if (raycastPlaneNormal && followTargetNormal) {
-
-        var ray = transform.position.RayTo(target.position);
-        
-        if (Physics.Raycast(ray, out var hit, mask)) {
-          planeNormal = hit.normal;
-          planePoint = hit.point;
-        }
-      }
     }
 
 
     private bool GetMousePoint(Plane plane, out Vector3 point) {
       var ray = pc.camera.ScreenPointToRay(Input.mousePosition);
       ray.origin = rayOrigin;
-      
+
       var res = (plane.Raycast(ray, out float enter));
       if (res) point = ray.origin + ray.direction * enter;
       else point = Vector3.zero;
