@@ -1060,13 +1060,14 @@ GameObject:
   - component: {fileID: 1759376002}
   - component: {fileID: 1759376001}
   - component: {fileID: 1759376007}
+  - component: {fileID: 1759376011}
+  - component: {fileID: 1759376010}
   - component: {fileID: 1759376006}
+  - component: {fileID: 1759376009}
+  - component: {fileID: 1759376008}
   - component: {fileID: 1759376005}
   - component: {fileID: 1759376004}
-  - component: {fileID: 1759376008}
-  - component: {fileID: 1759376011}
-  - component: {fileID: 1759376009}
-  - component: {fileID: 1759376010}
+  - component: {fileID: 1759376012}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1148,12 +1149,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 1759376000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 36a6e12994d43284e8de4b6e0b4912ea, type: 3}
+  m_Script: {fileID: 11500000, guid: 07324cda2b10873468eab4cab3e7a0e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  zoomMult: 1.2
-  zoomMin: 1.2
-  zoomMinStep: 0.1
+  activationType: 6
+  targetTag: 
+  targetLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  targets: []
+  customPredicate: {fileID: 0}
 --- !u!114 &1759376005
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1161,16 +1166,19 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1759376000}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 173bc11c57edd214aabecc9eef05265b, type: 3}
+  m_Script: {fileID: 11500000, guid: 9d6dd72364dd03347b202f5b5704d025, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rotSpeed: 1
-  key: 325
-  useHotkey: 1
-  limitVertRot: 1
-  rotationLimit: 89.9
+  key: 0
+  mask:
+    serializedVersion: 2
+    m_Bits: 823
+  raycastPlaneNormal: 0
+  planeNormal: {x: 0, y: 1, z: 0}
+  raycastPlanePoint: 0
+  planePoint: {x: 0, y: 0, z: 0}
 --- !u!114 &1759376006
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1180,20 +1188,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1759376000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f2df32892368f7d47a274c941e5c8e17, type: 3}
+  m_Script: {fileID: 11500000, guid: 86e970f0f22ab0e4a8c8ec7197569d67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  target: {fileID: 1415228824}
-  camera: {fileID: 0}
-  center: {x: 0, y: 0, z: 0}
-  distance: 2
-  horRot: 22.5
-  verRot: 50
-  displacement: {x: 0, y: 0, z: 0}
-  moveSmooth: 0.99999
-  zoomSmooth: 0.85
-  rotSmooth: 0.85
-  displacementSmooth: 0.85
+  <primaryHighlighterPrefab>k__BackingField: {fileID: 7609681180250886820, guid: c12bdc1113918d34883612a54e0b2005,
+    type: 3}
+  <secondaryHighlighterPrefab>k__BackingField: {fileID: 7609681180250886820, guid: f00ed2d3d1a8d3a42b9e455d1ffeb8bf,
+    type: 3}
 --- !u!114 &1759376007
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1234,23 +1235,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1759376000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c6826126b58ffd54fbd714636d1d4ceb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <primaryHighlighterPrefab>k__BackingField: {fileID: 7609681180250886820, guid: c12bdc1113918d34883612a54e0b2005,
-    type: 3}
-  <secondaryHighlighterPrefab>k__BackingField: {fileID: 7609681180250886820, guid: f00ed2d3d1a8d3a42b9e455d1ffeb8bf,
-    type: 3}
---- !u!114 &1759376009
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1759376000}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b858f54fd0a7d8a4ba0823b05cd08446, type: 3}
+  m_Script: {fileID: 11500000, guid: 87e33ea8b2dd9154f8c694788049ec84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   defaultMask:
@@ -1262,7 +1247,7 @@ MonoBehaviour:
   controlKey: 306
   altKey: 308
   shiftKey: 304
---- !u!114 &1759376010
+--- !u!114 &1759376009
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1271,18 +1256,29 @@ MonoBehaviour:
   m_GameObject: {fileID: 1759376000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 008398fd2d8b3b04783b65afff959d30, type: 3}
+  m_Script: {fileID: 11500000, guid: 24c350650582309468592e12b53c61f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  key: 325
-  mask:
-    serializedVersion: 2
-    m_Bits: 823
-  raycastPlaneNormal: 1
-  followTargetNormal: 0
-  planeNormal: {x: 0, y: 1, z: 0}
-  raycastPlanePoint: 1
-  planePoint: {x: 0, y: 0, z: 0}
+  zoomMult: 1.2
+  zoomMin: 1.2
+  zoomMinStep: 0.1
+--- !u!114 &1759376010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1759376000}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1dc18c90df29a224c81cc7599e6cdf3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rotSpeed: 1
+  key: 323
+  useHotkey: 0
+  limitVertRot: 1
+  rotationLimit: 89.9
 --- !u!114 &1759376011
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1292,7 +1288,30 @@ MonoBehaviour:
   m_GameObject: {fileID: 1759376000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4ac412428f441594e8c5ceae137c4567, type: 3}
+  m_Script: {fileID: 11500000, guid: a92dd1311856c704caba736ba87b4b37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  target: {fileID: 0}
+  camera: {fileID: 0}
+  center: {x: 0, y: 0, z: 0}
+  distance: 5
+  horRot: 30
+  verRot: 45
+  displacement: {x: 0, y: 0, z: 0}
+  moveSmooth: 0.85
+  zoomSmooth: 0.85
+  rotSmooth: 0.85
+  displacementSmooth: 0.85
+--- !u!114 &1759376012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1759376000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8aacd0144542a174bb476361232b9454, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &2109709239
